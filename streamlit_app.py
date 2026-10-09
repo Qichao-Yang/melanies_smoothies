@@ -23,8 +23,7 @@ ingredients_list = st.multiselect(
     , max_selections = 5
 )
 
-```python
-import requests
+
 import pandas as pd
 import streamlit as st
 
