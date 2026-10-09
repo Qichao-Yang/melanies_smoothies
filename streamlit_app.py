@@ -23,17 +23,60 @@ ingredients_list = st.multiselect(
     , max_selections = 5
 )
 
+```python
+import requests
+import pandas as pd
+import streamlit as st
 
-
+api_key = "QaF9NE6EplcCWZMIo2tYtRZhKO3LaXnjOK6cx29r"
 
 if ingredients_list:
-  ingredients_string = ''
-  
-  for fruit_chosen in ingredients_list:
-      ingredients_string += fruit_chosen + 'Nutrition Information'
-      smoothiefroot_response = requests.get("https://httpbin.io/json" + fruit_chosen)
-      sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
- 
+    ingredients_string = ''
+
+    for fruit_chosen in ingredients_list:
+        ingredients_string += fruit_chosen + ' Nutrition Information'
+
+        smoothiefroot_response = requests.get(
+            "https://api.nal.usda.gov/fdc/v1/foods/search",
+            params={
+                "api_key": api_key,
+                "query": fruit_chosen,
+                "pageSize": 5
+            },
+            timeout=20
+        )
+
+        if smoothiefroot_response.status_code == 200:
+            data = smoothiefroot_response.json()
+
+            foods = data.get("foods", [])
+
+            if foods:
+                food_data = []
+
+                for food in foods:
+                    food_data.append({
+                        "Food": food.get("description"),
+                        "Brand": food.get("brandName", "N/A"),
+                        "FDC ID": food.get("fdcId")
+                    })
+
+                sf_df = pd.DataFrame(food_data)
+                st.subheader(f"{fruit_chosen} Nutrition Information")
+                st.dataframe(sf_df, use_container_width=True)
+
+            else:
+                st.write(f"No results found for {fruit_chosen}")
+
+        else:
+            st.error(
+                f"API request failed: {smoothiefroot_response.status_code}"
+            )
+
+
+
+
+
 
 #st.write(ingredients_string)
 
